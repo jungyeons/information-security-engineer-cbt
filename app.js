@@ -30,6 +30,11 @@ const els = {
   resultDialog: document.querySelector("#resultDialog"),
   resultSummary: document.querySelector("#resultSummary"),
   subjectBreakdown: document.querySelector("#subjectBreakdown"),
+  sourceCount: document.querySelector("#sourceCount"),
+  sourceName: document.querySelector("#sourceName"),
+  sourceHomeLink: document.querySelector("#sourceHomeLink"),
+  sourceNote: document.querySelector("#sourceNote"),
+  sourceList: document.querySelector("#sourceList"),
 };
 
 const state = {
@@ -43,6 +48,7 @@ const state = {
   wrong: {},
   bookmarks: {},
   lastScores: {},
+  sources: null,
 };
 
 init();
@@ -50,10 +56,12 @@ init();
 async function init() {
   hydrateState();
   const sample = await fetch("./data/questions.sample.json").then((res) => res.json());
+  state.sources = await fetch("./data/source-links.comcbt.json").then((res) => res.json());
   state.datasets = [normalizeDataset(sample), ...readImports()];
   state.currentExamId ||= state.datasets[0]?.exams[0]?.id ?? "";
   bindEvents();
   renderDatasetOptions();
+  renderSources();
   render();
 }
 
@@ -293,6 +301,32 @@ function renderEmpty(message) {
   els.questionText.textContent = message;
   els.choiceList.innerHTML = "";
   els.explanationBox.hidden = true;
+}
+
+function renderSources() {
+  if (!state.sources) return;
+  els.sourceCount.textContent = `${state.sources.exams.length}회차`;
+  els.sourceName.textContent = state.sources.source.name;
+  els.sourceHomeLink.href = state.sources.source.url;
+  els.sourceNote.textContent = state.sources.source.note;
+  els.sourceList.innerHTML = state.sources.exams
+    .map((exam) => {
+      const files = exam.files
+        .map((file) => `<span class="file-chip">${escapeHtml(file.replace("정보보안기사", ""))}</span>`)
+        .join("");
+      return `
+        <article class="source-card">
+          <div class="source-meta">
+            <span>${exam.date}</span>
+            <span>${exam.round}회</span>
+          </div>
+          <h3>${escapeHtml(exam.title)}</h3>
+          <div class="file-chips">${files}</div>
+          <a href="${escapeHtml(exam.articleUrl)}" target="_blank" rel="noreferrer">원본 페이지 열기</a>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function filterQuestions(exam) {
