@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>정보보안기사 CBT</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="./assets/security-console.png" alt="" class="brand-art" />
+          <div>
+            <p class="eyebrow">정보보안기사</p>
+            <h1>필기 CBT</h1>
+          </div>
+        </div>
+
+        <section class="panel">
+          <h2>회차</h2>
+          <label class="field">
+            <span>데이터셋</span>
+            <select id="examSelect"></select>
+          </label>
+          <div class="mode-grid" role="group" aria-label="풀이 방식">
+            <button class="segmented is-active" data-mode="study">학습</button>
+            <button class="segmented" data-mode="exam">실전</button>
+            <button class="segmented" data-mode="wrong">오답</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>필터</h2>
+          <label class="field">
+            <span>과목</span>
+            <select id="subjectSelect"></select>
+          </label>
+          <label class="check-row">
+            <input id="shuffleToggle" type="checkbox" />
+            <span>문제 순서 섞기</span>
+          </label>
+          <label class="check-row">
+            <input id="bookmarkedToggle" type="checkbox" />
+            <span>즐겨찾기만 보기</span>
+          </label>
+        </section>
+
+        <section class="panel import-panel">
+          <h2>데이터 가져오기</h2>
+          <input id="fileInput" type="file" accept=".json,.csv" />
+          <button id="importButton" class="primary-button">JSON/CSV 선택</button>
+          <p class="hint">
+            실제 2024/2025 기출 원문은 재배포 권한이 있는 파일만 넣어주세요.
+          </p>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p id="datasetLabel" class="eyebrow">데이터 로딩 중</p>
+            <h2 id="examTitle">정보보안기사 필기 CBT</h2>
+          </div>
+          <div class="top-actions">
+            <button id="resetButton" class="ghost-button" title="현재 회차 풀이 초기화">초기화</button>
+            <button id="gradeButton" class="primary-button" title="현재 답안 채점">채점</button>
+          </div>
+        </header>
+
+        <section class="stats-grid" aria-label="풀이 현황">
+          <article class="stat">
+            <span>문항</span>
+            <strong id="questionCount">0</strong>
+          </article>
+          <article class="stat">
+            <span>풀이</span>
+            <strong id="answeredCount">0</strong>
+          </article>
+          <article class="stat">
+            <span>정답률</span>
+            <strong id="accuracyRate">0%</strong>
+          </article>
+          <article class="stat">
+            <span>최근 결과</span>
+            <strong id="lastResult">-</strong>
+          </article>
+        </section>
+
+        <section id="notice" class="notice" hidden></section>
+
+        <section class="quiz-layout">
+          <nav class="question-map" aria-label="문항 바로가기">
+            <div class="map-header">
+              <span>문항표</span>
+              <button id="showAllButton" class="text-button">전체</button>
+            </div>
+            <div id="questionMap" class="map-grid"></div>
+          </nav>
+
+          <article class="question-panel">
+            <div class="question-head">
+              <div>
+                <p id="questionMeta" class="eyebrow">문항</p>
+                <h3 id="questionText">문제를 선택하세요.</h3>
+              </div>
+              <button id="bookmarkButton" class="icon-button" title="즐겨찾기">☆</button>
+            </div>
+
+            <div id="choiceList" class="choice-list"></div>
+
+            <div class="question-tools">
+              <button id="prevButton" class="ghost-button">이전</button>
+              <button id="explainButton" class="ghost-button">해설</button>
+              <button id="nextButton" class="primary-button">다음</button>
+            </div>
+
+            <div id="explanationBox" class="explanation" hidden></div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="resultDialog">
+      <form method="dialog" class="dialog-card">
+        <h2>채점 결과</h2>
+        <div id="resultSummary" class="result-summary"></div>
+        <div id="subjectBreakdown" class="breakdown"></div>
+        <button class="primary-button">확인</button>
+      </form>
+    </dialog>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
