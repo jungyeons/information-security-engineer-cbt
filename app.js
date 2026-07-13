@@ -435,19 +435,31 @@ function resetCurrentExam() {
 async function handleImport(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const text = await file.text();
-  const dataset = file.name.endsWith(".csv") ? csvToDataset(text, file.name) : JSON.parse(text);
-  const normalized = normalizeDataset(dataset);
-  saveImport(normalized);
-  state.datasets = [state.datasets[0], ...readImports()];
-  state.currentExamId = normalized.exams[0]?.id ?? state.currentExamId;
-  renderDatasetOptions();
-  render();
-  event.target.value = "";
+  try {
+    const text = await file.text();
+    const dataset = file.name.toLowerCase().endsWith(".csv")
+      ? csvToDataset(text, file.name)
+      : JSON.parse(text);
+    validateDataset(dataset);
+    const normalized = normalizeDataset(dataset);
+    saveImport(normalized);
+    state.datasets = [state.datasets[0], ...readImports()];
+    state.currentExamId = normalized.exams[0]?.id ?? state.currentExamId;
+    renderDatasetOptions();
+    render();
+  } catch (error) {
+    els.notice.hidden = false;
+    els.notice.textContent = `가져오기 실패: ${error instanceof Error ? error.message : "파일 형식을 확인하세요."}`;
+  } finally {
+    event.target.value = "";
+  }
 }
 
 function csvToDataset(csvText, filename) {
   const lines = csvText.trim().split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) {
+    throw new Error("CSV에는 헤더와 한 개 이상의 문항이 필요합니다.");
+  }
   const headers = splitCsvLine(lines.shift()).map((item) => item.trim());
   const rows = lines.map((line) => {
     const values = splitCsvLine(line);
@@ -545,6 +557,34 @@ function normalizeDataset(dataset) {
       })),
     })),
   };
+}
+
+function validateDataset(dataset) {
+  if (!dataset || typeof dataset !== "object" || Array.isArray(dataset)) {
+    throw new Error("데이터셋은 JSON 객체여야 합니다.");
+  }
+  if (!Array.isArray(dataset.exams) || dataset.exams.length === 0) {
+    throw new Error("한 개 이상의 시험 회차가 필요합니다.");
+  }
+
+  dataset.exams.forEach((exam, examIndex) => {
+    if (!Array.isArray(exam.questions) || exam.questions.length === 0) {
+      throw new Error(`${examIndex + 1}번째 회차에 문항이 없습니다.`);
+    }
+    exam.questions.forEach((question, questionIndex) => {
+      const label = `${examIndex + 1}번째 회차 ${questionIndex + 1}번 문항`;
+      if (!String(question.text ?? "").trim()) {
+        throw new Error(`${label}의 문제 내용이 비어 있습니다.`);
+      }
+      if (!Array.isArray(question.choices) || question.choices.length < 2) {
+        throw new Error(`${label}에는 두 개 이상의 보기가 필요합니다.`);
+      }
+      const answer = Number(question.answer);
+      if (!Number.isInteger(answer) || answer < 1 || answer > question.choices.length) {
+        throw new Error(`${label}의 정답 번호가 보기 범위를 벗어났습니다.`);
+      }
+    });
+  });
 }
 
 function stableShuffle(items, seed) {
